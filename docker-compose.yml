@@ -1,0 +1,131 @@
+version: "3.8"
+
+services:  
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.6
+    hostname: ksr-zookeeper
+    container_name: ksr-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_LOCAL_PORT}
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - kafka_schema_registry_net
+
+  kafka:
+    image: confluentinc/cp-kafka:6.2.0
+    hostname: kafka
+    container_name: ksr-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_LISTENER_HOST_PORT}:${KAFKA_LISTENER_PORT}"
+
+    volumes:
+      - ./development/kafka/data:/var/lib/kafka/data
+
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:${ZOOKEEPER_LOCAL_PORT}'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:${KAFKA_LISTENER_PORT},PLAINTEXT_HOST://localhost:${KAFKA_INTERNAL_LISTENER_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+
+    networks:
+      - kafka_schema_registry_net
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:4.0.2
+    container_name: ksr-kafdrop
+    restart: "no"
+    ports:
+      - "${KAFDROP_HOST_PORT}:${KAFDROP_LOCAL_PORT}"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:${KAFKA_LISTENER_PORT}"
+      # JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+
+    depends_on:
+      - kafka
+
+    networks:
+      - kafka_schema_registry_net
+
+  registry:
+    image: confluentinc/cp-schema-registry:7.4.6
+    container_name: ksr-schema-registry
+    hostname: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "${SCHEMA_REGISTRY_HOST_PORT}:${SCHEMA_REGISTRY_LOCAL_PORT}"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:${ZOOKEEPER_LOCAL_PORT}'
+      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:${SCHEMA_REGISTRY_LOCAL_PORT}
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:${KAFKA_LISTENER_PORT},PLAINTEXT_HOST://localhost:${KAFKA_INTERNAL_LISTENER_PORT}
+      SCHEMA_REGISTRY_DEBUG: 'true'
+    networks:
+      - kafka_schema_registry_net
+
+
+  # Services
+  email_service:
+    build: ./email-service
+    container_name: ksr-email-service
+    volumes:
+      - ./email-service/src:/app/src
+      - ./email-service/package.json:/app/package.json
+      # - ./email-service/package-lock.json:/app/package-lock.json
+      - ./email-service/node_modules:/app/node_modules
+      - ./email-service/tsconfig.json:/app/tsconfig.json
+
+    ports:
+      - "${EMAIL_SERVICE_PORT}:${EMAIL_SERVICE_LOCAL_PORT}"
+
+    networks:
+      - kafka_schema_registry_net
+
+    environment:
+      - DEBUG=true
+      - EMAIL_SERVICE_PORT=${EMAIL_SERVICE_LOCAL_PORT}
+      - EMAIL_SERVICE_HOST=${EMAIL_SERVICE_HOST}
+      - KAFKA_HOST=kafka
+      - KAFKA_PORT=${KAFKA_LISTENER_PORT}
+
+    depends_on:
+      - kafka
+      - registry
+
+  customer_service:
+    build: ./customer_service
+    container_name: ksr-customer-service
+
+    command: python manage.py runserver 0.0.0.0:${CUSTOMER_SERVICE_LOCAL_PORT}
+    volumes:
+      - ./customer_service:/app
+
+    ports:
+      - "${CUSTOMER_SERVICE_PORT}:${CUSTOMER_SERVICE_LOCAL_PORT}"
+
+    environment:
+      - DEBUG=true
+      - KAFKA_HOST=kafka
+      - KAFKA_PORT=${KAFKA_LISTENER_PORT}
+      - SECRET_KEY=${CUSTOMER_SERVICE_SECRET_KEY}
+
+    networks:
+      - kafka_schema_registry_net
+
+    depends_on:
+      - kafka
+      - registry
+  
+    
+
+networks:
+  kafka_schema_registry_net:
+    driver: bridge

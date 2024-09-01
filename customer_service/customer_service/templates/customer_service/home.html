@@ -1,0 +1,65 @@
+{% extends 'customer_service/layout.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Customer Service</h1>
+            <p>
+                Welcome to the customer service page. This is a demo application to show the implementation of Kafka with Schema Registry. You can submit 
+                an email form which will be forwarded to the email service
+            </p>
+        </div>
+    </div>
+
+    {% if response  %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-success" role="alert">
+                {{ response }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <form action="/" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select class="form-control" id="category" name="category">
+                        <option value="general">General</option>
+                        <option value="technical">Technical</option>
+                        <option value="billing">Billing</option>
+                    </select>
+
+                </div>
+                <div class="form-group">
+                    <label for="from">From</label>
+                    <input type="email" class="form-control" id="from" name="from" aria-describedby="fromHelp" placeholder="Enter sender email">
+                    <small id="fromHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="to">To</label>
+                    <input type="email" class="form-control" id="to" name="to" aria-describedby="toHelp" placeholder="Enter recipient emails separated by comma">
+                    <small id="toHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <textarea class="form-control" id="subject" name="subject" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="body">Body</label>
+                    <textarea class="form-control" id="body" name="body" rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
