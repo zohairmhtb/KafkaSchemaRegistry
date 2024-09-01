@@ -96,6 +96,8 @@ services:
       - EMAIL_SERVICE_HOST=${EMAIL_SERVICE_HOST}
       - KAFKA_HOST=kafka
       - KAFKA_PORT=${KAFKA_LISTENER_PORT}
+      - SCHEMA_REGISTRY_HOST=registry
+      - SCHEMA_REGISTRY_PORT=${SCHEMA_REGISTRY_LOCAL_PORT}
 
     depends_on:
       - kafka
