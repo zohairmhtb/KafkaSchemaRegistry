@@ -60,6 +60,7 @@ services:
     hostname: schema-registry
     depends_on:
       - kafka
+      - zookeeper
     ports:
       - "${SCHEMA_REGISTRY_HOST_PORT}:${SCHEMA_REGISTRY_LOCAL_PORT}"
     environment:
@@ -115,6 +116,8 @@ services:
       - DEBUG=true
       - KAFKA_HOST=kafka
       - KAFKA_PORT=${KAFKA_LISTENER_PORT}
+      - SCHEMA_REGISTRY_HOST=schema-registry
+      - SCHEMA_REGISTRY_PORT=${SCHEMA_REGISTRY_LOCAL_PORT}
       - SECRET_KEY=${CUSTOMER_SERVICE_SECRET_KEY}
 
     networks:

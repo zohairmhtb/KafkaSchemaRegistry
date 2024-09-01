@@ -127,3 +127,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Kafka Configuration
 KAFKA_EMAIL_TOPIC='send-email'
 KAFKA_BROKER_URL=f"{os.getenv('KAFKA_HOST', 'kafka')}:{os.getenv('KAFKA_PORT', '9092')}"
+
+CONFLUENT_SCHEMA_REGISTRY_URL=f"http://{os.getenv('SCHEMA_REGISTRY_HOST', 'schema-registry')}:{os.getenv('SCHEMA_REGISTRY_PORT', '8081')}"
+SCHEMA_REGISTRY_CONF = {'url': CONFLUENT_SCHEMA_REGISTRY_URL}
+SEND_EMAIL_SCHEMA_SUBJECT=f"{KAFKA_EMAIL_TOPIC}-value"
+SEND_EMAIL_KEY_SCHEMA_SUBJECT=f"{KAFKA_EMAIL_TOPIC}-key"
+
