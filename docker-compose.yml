@@ -46,7 +46,6 @@ services:
       - "${KAFDROP_HOST_PORT}:${KAFDROP_LOCAL_PORT}"
     environment:
       KAFKA_BROKERCONNECT: "kafka:${KAFKA_LISTENER_PORT}"
-      # JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
 
     depends_on:
       - kafka
@@ -80,7 +79,6 @@ services:
     volumes:
       - ./email-service/src:/app/src
       - ./email-service/package.json:/app/package.json
-      # - ./email-service/package-lock.json:/app/package-lock.json
       - ./email-service/node_modules:/app/node_modules
       - ./email-service/tsconfig.json:/app/tsconfig.json
 

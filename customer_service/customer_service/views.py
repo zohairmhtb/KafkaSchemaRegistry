@@ -15,12 +15,12 @@ from confluent_kafka.schema_registry.avro import AvroSerializer
 from confluent_kafka.schema_registry.error import SchemaRegistryError
 
 
-
+# Create the configuration for Schema registry. Use Avro as the schema definition format
 schema_registry_client = SchemaRegistryClient(settings.SCHEMA_REGISTRY_CONF)
 avro_serializer = AvroSerializer(schema_registry_client, json.dumps(EmailCommand.get_avro_schema()), EmailCommand.parse_from_schema)
 string_serializer = StringSerializer('utf_8')
 
-
+# Create the producer instance
 producer = Producer({'bootstrap.servers': settings.KAFKA_BROKER_URL})
 
 
@@ -50,6 +50,13 @@ def delivery_report(err, msg):
         msg.key(), msg.topic(), msg.partition(), msg.offset()))
 
 def send_command(data: dict):
+    """
+    This function receives a dictionary with the data from the form. It creates a message object and validates the schema agains the registry. 
+    It then sends the message to the Kafka topic.
+    @param data: dict
+    @return: Tuple[str, bool]
+    """
+    # Convert the dictionary to message object
     command = EmailCommand.from_json(data)
     if command is None:
         return "Invalid command"
@@ -57,6 +64,7 @@ def send_command(data: dict):
     response = "Email sent successfully"
     is_success = True
     try:
+        # Validate the schema and send message to Kafka topic
         producer.produce(
             settings.KAFKA_EMAIL_TOPIC, 
             key=command.category, 
@@ -65,6 +73,7 @@ def send_command(data: dict):
         )
         producer.flush()
     except SchemaRegistryError as e:
+        # If the schema is invalid, the message will not be sent
         print(f"Failed to send email: {e}")
         response = e.error_message
         is_success = False

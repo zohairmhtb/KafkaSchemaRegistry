@@ -8,6 +8,9 @@ export class AppController {
   private schemaRegistry: SchemaRegistry;
   constructor(
   ) {
+    /**
+     * This function initializes the SchemaRegistry instance with the host and port of the Schema Registry service.
+     */
     this.schemaRegistry = new SchemaRegistry({host: `http://${process.env.SCHEMA_REGISTRY_HOST}:${process.env.SCHEMA_REGISTRY_PORT}`});
   }
 
@@ -19,7 +22,13 @@ export class AppController {
 
   @MessagePattern('send-email')
   async sendEmail(@Payload() data: any) {
+    /**
+     * This function decodes the data from the Kafka message and parses it into the EmailCommand object.
+     * @param data The data from the Kafka message received as byte array.
+     * @returns boolean
+     */
     const parsedData:EmailCommand = await this.schemaRegistry.decode(data);
+    console.log(parsedData);
     return true;
   }
 }
